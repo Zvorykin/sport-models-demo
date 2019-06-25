@@ -4,7 +4,7 @@ require_relative './application_record'
 
 class Team < ApplicationRecord
   has_many :players
-  belongs_to :match
+  has_and_belongs_to_many :matches
 
   validates :name, presence: true, uniqueness: true
 end

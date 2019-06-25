@@ -6,4 +6,4 @@ ruby '2.6.3'
 gem 'activerecord'
 gem 'sqlite3'
 
-
+gem 'tty-prompt'

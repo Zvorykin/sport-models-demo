@@ -23,6 +23,7 @@ ActiveRecord::Schema.define do
 
   create_table :players do |t|
     t.string :name
+    t.integer :team_id
 
     t.timestamps
   end
@@ -33,13 +34,22 @@ ActiveRecord::Schema.define do
     t.timestamps
   end
 
-  create_table :matches, &:timestamps
+  create_table :matches do |t|
+    t.string :place
+    t.date :date
+
+    t.timestamps
+  end
 
   create_table :match_metrics do |t|
     t.integer :match_id
     t.integer :player_id
     t.integer :metric_id
   end
+  add_index(:match_metrics, %i[match_id player_id metric_id], unique: true)
+
+  create_join_table :matches, :teams, primary: false
+  add_index(:matches_teams, %i[match_id team_id], unique: true)
 end
 
 require_relative './seeds'
