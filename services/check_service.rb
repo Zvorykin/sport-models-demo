@@ -2,21 +2,25 @@
 
 module CheckService
   class << self
-    def perform(prompt)
-      players = Player.all.map { |player| { name: player.name, value: player.id } }
-      player_id = prompt.select('Please select player', players, enum: '.')
+    def perform(params = {})
+      player_id = params[:player_id]
+      metric_id = params[:metric_id]
+      # player_id = 4
+      # metric_id = 1
 
-      metrics = Metric.all.map { |metric| { name: metric.name, value: metric.id } }
-      metric_id = prompt.select('Please select metric', metrics, enum: '.')
-
-      player_id = 1
-      metric_id = 1
-
-      player_metrics = Match.where(player_id: player_id)
-                            .order_by(date: :asc)
+      player_matches = Match.includes(:teams)
+                            .references(:teams)
+                            .where(teams: { id: Player.find(player_id).team.id })
+                            .order(date: :desc)
                             .limit(5)
 
-      p player_metrics
+      Match.includes(:match_metrics)
+           .where(match_metrics: {
+              player_id: player_id,
+              metric_id: metric_id,
+              match_id: player_matches.pluck(:id)
+            })
+           .order(date: :desc)
     end
   end
 end
