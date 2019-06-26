@@ -8,8 +8,7 @@ module CheckService
       # player_id = 4
       # metric_id = 1
 
-      player_matches = Match.includes(:teams)
-                            .references(:teams)
+      player_matches = Match.eager_load(:teams)
                             .where(teams: { id: Player.find(player_id).team.id })
                             .order(date: :desc)
                             .limit(5)

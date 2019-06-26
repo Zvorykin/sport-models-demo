@@ -17,13 +17,23 @@ MAIN_CHOICES = [
 
 prompt = TTY::Prompt.new
 loop do
-  # main_choice = prompt.select('Please select an option', MAIN_CHOICES)
-  main_choice = :top
+  # main_choice = :top
+  main_choice = prompt.select('Please select an option', MAIN_CHOICES)
 
   # Service Object is not ideal pattern to use here but it's ok for demo purpose
   case main_choice
   when :edit
-    p 'working'
+    params = prompt.collect do
+      key(:player_id).select('Please select player', PLAYERS_LIST, enum: '.')
+      key(:metric_id).select('Please select metric', METRICS_LIST, enum: '.')
+    end
+
+    matches = Player.find(params[:player_id]).matches
+                .map { |match| { name: "#{match.place} - #{match.date}", value: match.id } }
+    params[:match_id] = prompt.select('Please select match', matches, enum: '.')
+
+    EditService.perform(params)
+    p 'Done!'
   when :check
     params = prompt.collect do
       key(:player_id).select('Please select player', PLAYERS_LIST, enum: '.')
@@ -60,7 +70,7 @@ loop do
     p 'smth wrong'
   end
 
-  break
+  # break
 end
 
 p 'Thanks!'
