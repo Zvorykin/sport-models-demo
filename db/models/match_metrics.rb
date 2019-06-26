@@ -3,7 +3,7 @@
 require_relative './application_record'
 
 class MatchMetrics < ApplicationRecord
-  has_one :player
-  has_one :metric
-  has_one :match
+  belongs_to :player
+  belongs_to :match
+  belongs_to :metric
 end
