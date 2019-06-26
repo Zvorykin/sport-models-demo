@@ -15,6 +15,56 @@ MAIN_CHOICES = [
   { name: 'TOP-5 players', value: :top }
 ].freeze
 
+def edit_handle(prompt)
+  params = prompt.collect do
+    key(:player_id).select('Please select player', PLAYERS_LIST, enum: '.')
+    key(:metric_id).select('Please select metric', METRICS_LIST, enum: '.')
+  end
+
+  matches = Player.find(params[:player_id]).matches
+              .map { |match| { name: "#{match.place} - #{match.date}", value: match.id } }
+  params[:match_id] = prompt.select('Please select match', matches, enum: '.')
+
+  EditService.perform(params)
+  p 'Done!'
+end
+
+def check_handle(prompt)
+  params = prompt.collect do
+    key(:player_id).select('Please select player', PLAYERS_LIST, enum: '.')
+    key(:metric_id).select('Please select metric', METRICS_LIST, enum: '.')
+  end
+
+  results = CheckService.perform(params)
+
+  if results.any?
+    p 'Found some metrics!'
+    results.each { |r| p "#{r.date} - #{r.place}" }
+  else
+    p 'No such metrics were found for that player :-('
+  end
+end
+
+def top_handle(prompt)
+  team_choices = [{ name: 'Overall', value: nil }] + TEAMS_LIST
+
+  params = prompt.collect do
+    key(:metric_id).select('Please select metric', METRICS_LIST, enum: '.')
+    key(:team_id).select('Please select team or choose "overall"', team_choices, enum: '.')
+  end
+
+  results = TopService.perform(params)
+
+  if results.any?
+    p 'TOP-5!'
+    results.each_with_index do |r, index|
+      p "#{index + 1}. #{r.player.name}(id=#{r.player.id}) - #{r.sum}"
+    end
+  else
+    p 'No metrics found :-('
+  end
+end
+
 prompt = TTY::Prompt.new
 loop do
   # main_choice = :top
@@ -23,49 +73,11 @@ loop do
   # Service Object is not ideal pattern to use here but it's ok for demo purpose
   case main_choice
   when :edit
-    params = prompt.collect do
-      key(:player_id).select('Please select player', PLAYERS_LIST, enum: '.')
-      key(:metric_id).select('Please select metric', METRICS_LIST, enum: '.')
-    end
-
-    matches = Player.find(params[:player_id]).matches
-                .map { |match| { name: "#{match.place} - #{match.date}", value: match.id } }
-    params[:match_id] = prompt.select('Please select match', matches, enum: '.')
-
-    EditService.perform(params)
-    p 'Done!'
+    edit_handle(prompt)
   when :check
-    params = prompt.collect do
-      key(:player_id).select('Please select player', PLAYERS_LIST, enum: '.')
-      key(:metric_id).select('Please select metric', METRICS_LIST, enum: '.')
-    end
-
-    results = CheckService.perform(params)
-
-    if results.any?
-      p 'Found some metrics!'
-      results.each { |r| p "#{r.date} - #{r.place}" }
-    else
-      p 'No such metrics were found for that player :-('
-    end
+    check_handle(prompt)
   when :top
-    team_choices = [{ name: 'Overall', value: nil }] + TEAMS_LIST
-
-    params = prompt.collect do
-      key(:metric_id).select('Please select metric', METRICS_LIST, enum: '.')
-      key(:team_id).select('Please select team or choose "overall"', team_choices, enum: '.')
-    end
-
-    results = TopService.perform(params)
-
-    if results.any?
-      p 'TOP-5!'
-      results.each_with_index do |r, index|
-        p "#{index + 1}. #{r.player.name}(id=#{r.player.id}) - #{r.sum}"
-      end
-    else
-      p 'No metrics found :-('
-    end
+    top_handle(prompt)
   else
     p 'smth wrong'
   end
